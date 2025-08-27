@@ -1,21 +1,18 @@
-// const express =  require('express');
+// const express = require('express');
 // const cors = require('cors');
-// const app = express();
-// const port = process.env.PORT || 3000;
 // const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 // require('dotenv').config();
 
+// const app = express();
+// const port = process.env.PORT || 3000;
 
 // // Middleware
-
 // app.use(cors());
 // app.use(express.json());
 
+// // MongoDB connection
+// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@omicronx.oj2lwua.mongodb.net/?retryWrites=true&w=majority`;
 
-
-// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@omicronx.oj2lwua.mongodb.net/?retryWrites=true&w=majority&appName=OmicronX`;
-
-// // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 // const client = new MongoClient(uri, {
 //   serverApi: {
 //     version: ServerApiVersion.v1,
@@ -26,85 +23,93 @@
 
 // async function run() {
 //   try {
-//     // Connect the client to the server	(optional starting in v4.7)
 //     await client.connect();
-
-
-
+//     console.log("Connected to MongoDB");
 
 //     const carCollection = client.db('carRent').collection('cars');
-    
-//     //cars api
-//     app.get('/cars', async(req, res) =>{
-//         const cursor = carCollection.find();
-//         const result = await cursor.toArray();
-//         res.send(result);
+
+//     // Get all cars or user-specific cars
+//     app.get("/cars", async (req, res) => {
+//       try {
+//         const email = req.query.email;
+//         const query = email ? { email } : {};
+//         const cars = await carCollection.find(query).toArray();
+//         res.send(cars);
+//       } catch (err) {
+//         console.error(err);
+//         res.status(500).send({ message: "Failed to fetch cars" });
+//       }
 //     });
 
-
-//     app.get('/cars/:id', async(req, res) =>{
+//     // Get single car by ID
+//     app.get("/cars/:id", async (req, res) => {
+//       try {
 //         const id = req.params.id;
-//         const query = { _id: new ObjectId(id) };
-//         const result = await carCollection.findOne(query);
-//         res.send(result);
-//     })
-
-
-    
-
-    
-
-//     app.post('/cars', async(req, res) =>{
-//       const newCar = req.body;
-//       console.log('adding new car', newCar);
-//       const result = await carCollection.insertOne(newCar);
-//       res.send(result);
-
+//         const car = await carCollection.findOne({ _id: new ObjectId(id) });
+//         res.send(car);
+//       } catch (err) {
+//         console.error(err);
+//         res.status(500).send({ message: "Failed to fetch car" });
+//       }
 //     });
 
+//     // Add a new car
+//     app.post("/cars", async (req, res) => {
+//       try {
+//         const newCar = req.body;
 
-//     // Send a ping to confirm a successful connection
+//         // Ensure email and createdAt fields exist
+//         if (!newCar.email) {
+//           return res.status(400).send({ message: "Email is required" });
+//         }
+//         newCar.createdAt = new Date();
+
+//         const result = await carCollection.insertOne(newCar);
+//         res.send(result);
+//       } catch (err) {
+//         console.error(err);
+//         res.status(500).send({ message: "Failed to add car" });
+//       }
+//     });
+
+//     // Ping to verify connection
 //     await client.db("admin").command({ ping: 1 });
-//     console.log("Pinged your deployment. You successfully connected to MongoDB!");
-//   } finally {
-//     // Ensures that the client will close when you finish/error
-//     // await client.close();
+//     console.log("Pinged your MongoDB deployment successfully!");
+    
+//   } catch (err) {
+//     console.error("MongoDB connection failed:", err);
 //   }
 // }
+
 // run().catch(console.dir);
 
-
-
-
-// app.get('/', (req, res) => {
-//     res.send('Hello World!');
+// // Root route
+// app.get("/", (req, res) => {
+//   res.send("Car Rental Backend Running!");
 // });
 
+// // Start server
 // app.listen(port, () => {
-//     console.log(`Server is running on port ${port}`);
+//   console.log(`Server running on port ${port}`);
 // });
 
 
 
-
-const express =  require('express');
+const express = require('express');
 const cors = require('cors');
-const app = express();
-const port = process.env.PORT || 3000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 
+const app = express();
+const port = process.env.PORT || 3000;
 
 // Middleware
-
 app.use(cors());
 app.use(express.json());
 
+// MongoDB connection
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@omicronx.oj2lwua.mongodb.net/?retryWrites=true&w=majority`;
 
-
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@omicronx.oj2lwua.mongodb.net/?retryWrites=true&w=majority&appName=OmicronX`;
-
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -115,61 +120,72 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-
-
-
+    console.log("Connected to MongoDB");
 
     const carCollection = client.db('carRent').collection('cars');
-    
-    //cars api
-    app.get('/cars', async(req, res) =>{
-        const cursor = carCollection.find();
-        const result = await cursor.toArray();
-        res.send(result);
+
+    // Get all cars or user-specific cars
+    app.get("/cars", async (req, res) => {
+      try {
+        const email = req.query.email;
+        const query = email ? { email } : {};
+        const cars = await carCollection.find(query).toArray();
+        res.send(cars);
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: "Failed to fetch cars" });
+      }
     });
 
-
-    app.get('/cars/:id', async(req, res) =>{
+    // Get single car by ID
+    app.get("/cars/:id", async (req, res) => {
+      try {
         const id = req.params.id;
-        const query = { _id: new ObjectId(id) };
-        const result = await carCollection.findOne(query);
-        res.send(result);
-    })
-
-
-    
-
-    
-
-    app.post('/cars', async(req, res) =>{
-      const newCar = req.body;
-      console.log('adding new car', newCar);
-      const result = await carCollection.insertOne(newCar);
-      res.send(result);
-
+        const car = await carCollection.findOne({ _id: new ObjectId(id) });
+        res.send(car);
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: "Failed to fetch car" });
+      }
     });
 
+    // Add a new car
+    app.post("/cars", async (req, res) => {
+      try {
+        const newCar = req.body;
 
-    // Send a ping to confirm a successful connection
+        // Ensure email and createdAt fields exist
+        if (!newCar.email) {
+          return res.status(400).send({ message: "Email is required" });
+        }
+        newCar.createdAt = new Date();
+
+        const result = await carCollection.insertOne(newCar);
+        res.send(result);
+      } catch (err) {
+        console.error(err);
+        res.status(500).send({ message: "Failed to add car" });
+      }
+    });
+
+    // Ping to verify connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
+    console.log("Pinged your MongoDB deployment successfully!");
+    
+  } catch (err) {
+    console.error("MongoDB connection failed:", err);
   }
 }
+
 run().catch(console.dir);
 
-
-
-
-app.get('/', (req, res) => {
-    res.send('Hello World!');
+// Root route
+app.get("/", (req, res) => {
+  res.send("Car Rental Backend Running!");
 });
 
+// Start server
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+  console.log(`Server running on port ${port}`);
 });
-

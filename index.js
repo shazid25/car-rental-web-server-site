@@ -6,7 +6,8 @@ require("dotenv").config();
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(cors({ origin: ["https://car-rental-service-ae23a.web.app"] }));
+
 app.use(express.json());
 
 // MongoDB connection
@@ -22,32 +23,32 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
+    // await client.connect();
     const carCollection = client.db("carRent").collection("cars");
 
-    // ✅ Ensure all cars have default fields
-    await carCollection.updateMany(
-      { features: { $exists: false } },
-      {
-        $set: {
-          features: {
-            GPS: false,
-            AC: false,
-            Bluetooth: false,
-            HeatedSeats: false,
-            Sunroof: false,
-            USBPorts: false,
-          },
-          description: "",
-          imageUrl: "",
-          location: "",
-          availability: true,
-          createdAt: new Date(),
-        },
-      }
-    );
+    //  Ensure all cars have default fields
+    // await carCollection.updateMany(
+    //   { features: { $exists: false } },
+    //   {
+    //     $set: {
+    //       features: {
+    //         GPS: false,
+    //         AC: false,
+    //         Bluetooth: false,
+    //         HeatedSeats: false,
+    //         Sunroof: false,
+    //         USBPorts: false,
+    //       },
+    //       description: "",
+    //       imageUrl: "",
+    //       location: "",
+    //       availability: true,
+    //       createdAt: new Date(),
+    //     },
+    //   }
+    // );
 
-    // ✅ Get all cars (optionally filter by user email)
+    //  Get all cars (optionally filter by user email)
     app.get("/cars", async (req, res) => {
       try {
         const email = req.query.email;
@@ -59,7 +60,7 @@ async function run() {
       }
     });
 
-    // ✅ Get a single car by ID
+    // Get a single car by ID
     app.get("/cars/:id", async (req, res) => {
       const id = req.params.id;
       try {
@@ -71,7 +72,7 @@ async function run() {
       }
     });
 
-    // ✅ Add a new car
+    //  Add a new car
     app.post("/cars", async (req, res) => {
       try {
         const newCar = req.body;
@@ -83,7 +84,7 @@ async function run() {
       }
     });
 
-    // ✅ Update a car by ID
+    //  Update a car by ID
     app.put("/cars/:id", async (req, res) => {
       const id = req.params.id;
       const updatedCar = req.body;
@@ -101,7 +102,7 @@ async function run() {
       }
     });
 
-    // ✅ Delete a car by ID
+    //  Delete a car by ID
     app.delete("/cars/:id", async (req, res) => {
       const id = req.params.id;
       try {
@@ -123,10 +124,10 @@ async function run() {
 
 run().catch(console.dir);
 
-// ✅ Root endpoint
+//  Root endpoint
 app.get("/", (req, res) => res.send("🚗 Car Rental API is running..."));
 
-// ✅ Start server
+//  Start server
 app.listen(port, () =>
   console.log(`🚀 Server running at http://localhost:${port}`)
 );

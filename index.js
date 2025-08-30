@@ -1,115 +1,17 @@
-// const express = require('express');
-// const cors = require('cors');
-// const app = express();
-// const port = process.env.PORT || 3000;
-// const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-// require('dotenv').config();
+const express = require("express");
+const cors = require("cors");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+require("dotenv").config();
 
-// // Middleware
-// app.use(cors());
-// app.use(express.json());
-
-// // MongoDB connection
-// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@omicronx.oj2lwua.mongodb.net/?retryWrites=true&w=majority&appName=OmicronX`;
-// const client = new MongoClient(uri, {
-//   serverApi: {
-//     version: ServerApiVersion.v1,
-//     strict: true,
-//     deprecationErrors: true,
-//   },
-// });
-
-// async function run() {
-//   try {
-//     await client.connect();
-//     const carCollection = client.db('carRent').collection('cars');
-
-//     // Ensure old cars have default fields
-//     await carCollection.updateMany(
-//       { features: { $exists: false } },
-//       {
-//         $set: {
-//           features: {
-//             GPS: false,
-//             AC: false,
-//             Bluetooth: false,
-//             HeatedSeats: false,
-//             Sunroof: false,
-//             USBPorts: false,
-//           },
-//           description: "",
-//           imageUrl: "",
-//           location: "",
-//           availability: true,
-//           createdAt: new Date(),
-//         },
-//       }
-//     );
-
-//     // Get all cars
-//     app.get('/cars', async (req, res) => {
-//       const email = req.query.email;
-//       const query = email ? { email } : {};
-//       const cars = await carCollection.find(query).toArray();
-//       res.send(cars);
-//     });
-
-//     // Get car by ID
-//     app.get('/cars/:id', async (req, res) => {
-//       const id = req.params.id;
-//       let car;
-//       try {
-//         car = await carCollection.findOne({ _id: new ObjectId(id) });
-//       } catch (err) {
-//         return res.send({ error: "Invalid car ID" });
-//       }
-//       if (!car) return res.send({ error: "Car not found" });
-//       res.send(car);
-//     });
-
-//     // Add new car
-//     app.post('/cars', async (req, res) => {
-//       const newCar = req.body;
-//       newCar.createdAt = new Date();
-//       const result = await carCollection.insertOne(newCar);
-//       res.send(result);
-//     });
-
-//     await client.db("admin").command({ ping: 1 });
-//     console.log("Connected to MongoDB!");
-//   } finally {
-//     // Do not close client to keep API running
-//   }
-// }
-
-// run().catch(console.dir);
-
-// app.get('/', (req, res) => res.send('Hello World!'));
-// app.listen(port, () => console.log(`Server running on port ${port}`));
-
-
-
-
-
-
-
-
-
-
-
-const express = require('express');
-const cors = require('cors');
 const app = express();
 const port = process.env.PORT || 3000;
-const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
-require('dotenv').config();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
 // MongoDB connection
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@omicronx.oj2lwua.mongodb.net/?retryWrites=true&w=majority&appName=OmicronX`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@omicronx.oj2lwua.mongodb.net/?retryWrites=true&w=majority`;
+
 const client = new MongoClient(uri, {
   serverApi: {
     version: ServerApiVersion.v1,
@@ -121,9 +23,9 @@ const client = new MongoClient(uri, {
 async function run() {
   try {
     await client.connect();
-    const carCollection = client.db('carRent').collection('cars');
+    const carCollection = client.db("carRent").collection("cars");
 
-    // Ensure old cars have default fields
+    // ✅ Ensure all cars have default fields
     await carCollection.updateMany(
       { features: { $exists: false } },
       {
@@ -145,43 +47,86 @@ async function run() {
       }
     );
 
-    // Get all cars
-    app.get('/cars', async (req, res) => {
-      const email = req.query.email;
-      const query = email ? { email } : {};
-      const cars = await carCollection.find(query).toArray();
-      res.send(cars);
-    });
-
-    // Get car by ID
-    app.get('/cars/:id', async (req, res) => {
-      const id = req.params.id;
-      let car;
+    // ✅ Get all cars (optionally filter by user email)
+    app.get("/cars", async (req, res) => {
       try {
-        car = await carCollection.findOne({ _id: new ObjectId(id) });
+        const email = req.query.email;
+        const query = email ? { email } : {};
+        const cars = await carCollection.find(query).toArray();
+        res.send(cars);
       } catch (err) {
-        return res.send({ error: "Invalid car ID" });
+        res.status(500).send({ error: "Failed to fetch cars" });
       }
-      if (!car) return res.send({ error: "Car not found" });
-      res.send(car);
     });
 
-    // Add new car
-    app.post('/cars', async (req, res) => {
-      const newCar = req.body;
-      newCar.createdAt = new Date();
-      const result = await carCollection.insertOne(newCar);
-      res.send(result);
+    // ✅ Get a single car by ID
+    app.get("/cars/:id", async (req, res) => {
+      const id = req.params.id;
+      try {
+        const car = await carCollection.findOne({ _id: new ObjectId(id) });
+        if (!car) return res.status(404).send({ error: "Car not found" });
+        res.send(car);
+      } catch (err) {
+        res.status(400).send({ error: "Invalid car ID" });
+      }
     });
 
-    await client.db("admin").command({ ping: 1 });
-    console.log("Connected to MongoDB!");
-  } finally {
-    // Do not close client to keep API running
+    // ✅ Add a new car
+    app.post("/cars", async (req, res) => {
+      try {
+        const newCar = req.body;
+        newCar.createdAt = new Date();
+        const result = await carCollection.insertOne(newCar);
+        res.send(result);
+      } catch (err) {
+        res.status(400).send({ error: "Failed to add car" });
+      }
+    });
+
+    // ✅ Update a car by ID
+    app.put("/cars/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedCar = req.body;
+      try {
+        const result = await carCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: updatedCar }
+        );
+        if (result.matchedCount === 0) {
+          return res.status(404).send({ error: "Car not found" });
+        }
+        res.send(result);
+      } catch (err) {
+        res.status(400).send({ error: "Invalid car ID" });
+      }
+    });
+
+    // ✅ Delete a car by ID
+    app.delete("/cars/:id", async (req, res) => {
+      const id = req.params.id;
+      try {
+        const result = await carCollection.deleteOne({ _id: new ObjectId(id) });
+        if (result.deletedCount === 0) {
+          return res.status(404).send({ error: "Car not found" });
+        }
+        res.send(result);
+      } catch (err) {
+        res.status(400).send({ error: "Invalid car ID" });
+      }
+    });
+
+    console.log("✅ Connected to MongoDB & API routes ready!");
+  } catch (err) {
+    console.error("❌ MongoDB connection error:", err);
   }
 }
 
 run().catch(console.dir);
 
-app.get('/', (req, res) => res.send('Hello World!'));
-app.listen(port, () => console.log(`Server running on port ${port}`));
+// ✅ Root endpoint
+app.get("/", (req, res) => res.send("🚗 Car Rental API is running..."));
+
+// ✅ Start server
+app.listen(port, () =>
+  console.log(`🚀 Server running at http://localhost:${port}`)
+);
